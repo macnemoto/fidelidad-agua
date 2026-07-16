@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta de Fidelidad</title>
+    <!-- Cargamos html2canvas desde un CDN confiable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #0077b6;
+            --primary-light: #00b4d8;
+            --primary-bg: #e2f1f8;
+            --dark: #03045e;
+            --gold: #d4af37;
+            --text: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card-container {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            overflow: hidden;
+            border: 2px solid var(--primary-light);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 22px 15px;
+        }
+
+        .brand-logo {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .brand-tagline {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 20px 15px;
+        }
+
+        .client-section {
+            margin-bottom: 20px;
+        }
+
+        .client-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .client-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 16px;
+            border: 2px solid var(--primary-bg);
+            border-radius: 10px;
+            color: var(--dark);
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.2s;
+            background-color: #fafbfc;
+        }
+
+        .client-input:focus {
+            border-color: var(--primary-light);
+            background-color: #ffffff;
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Alineación limpia usando Flexbox para evitar que los iconos se desvíen */
+        .stamp-box {
+            position: relative;
+            aspect-ratio: 1;
+            background-color: var(--primary-bg);
+            border: 2px dashed var(--primary-light);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .stamp-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            position: absolute;
+        }
+
+        .stamp-checkbox {
+            display: none !important;
+        }
+
+        /* Dimensiones fijas e independientes de transformaciones complejas */
+        .stamp-icon {
+            width: 60%;
+            height: 60%;
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            transform: scale(0.6);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Comportamiento al marcar */
+        .stamp-checkbox:checked + .stamp-box {
+            background-color: #e0f2fe;
+            border: 2px solid var(--primary);
+        }
+
+        .stamp-checkbox:checked + .stamp-box .stamp-number {
+            opacity: 0.15;
+        }
+
+        .stamp-checkbox:checked + .stamp-box .stamp-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Casilla 10 Especial */
+        .stamp-box.gold-reward {
+            background-color: #fffdf0;
+            border: 2.5px solid var(--gold);
+        }
+
+        .stamp-box.gold-reward .stamp-number {
+            color: var(--gold);
+            font-weight: 800;
+        }
+
+        .stamp-checkbox:checked + .stamp-box.gold-reward {
+            background-color: #fdfaf0;
+            border: 2.5px solid var(--gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        .card-footer {
+            background-color: #fafbfc;
+            border-top: 1px solid #f0f0f0;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .contact-info {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .terms {
+            font-size: 10px;
+            color: #777;
+            line-height: 1.4;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            border: none;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-share {
+            background-color: #25D366;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+        }
+
+        .btn-reset {
+            background-color: #e2e8f0;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Ventana emergente (Modal) para guardar en el celular */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 95%;
+            max-height: 80%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .modal-img {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            object-fit: contain;
+        }
+
+        .modal-instruction {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .btn-close-modal {
+            background-color: #ef4444;
+            color: white;
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <div class="card-container" id="tarjeta-fidelidad">
+            <div class="card-header">
+                <div class="brand-logo">💧 Tarjeta de Fidelidad<span>.</span></div>
+                <div class="brand-tagline">¡Premio a tu constancia y preferencia!</div>
+            </div>
+
+            <div class="card-body">
+                <div class="client-section">
+                    <label class="client-label" for="client-name">Cliente / Titular</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="client-name" class="client-input" placeholder="Escribe el nombre aquí..." autocomplete="off">
+                    </div>
+                </div>
+
+                <p class="instructions">
+                    Toca cada casilla para marcar tu servicio. ¡Al completar 9 marcas, la <b>Casilla 10</b> es totalmente gratis!
+                </p>
+
+                <div class="grid-container">
+                    <!-- Casillas 1 a 9 con SVGs rediseñados y estables -->
+                    <input type="checkbox" id="stamp-1" class="stamp-checkbox">
+                    <label for="stamp-1" class="stamp-box">
+                        <span class="stamp-number">1</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-2" class="stamp-checkbox">
+                    <label for="stamp-2" class="stamp-box">
+                        <span class="stamp-number">2</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-3" class="stamp-checkbox">
+                    <label for="stamp-3" class="stamp-box">
+                        <span class="stamp-number">3</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-4" class="stamp-checkbox">
+                    <label for="stamp-4" class="stamp-box">
+                        <span class="stamp-number">4</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-5" class="stamp-checkbox">
+                    <label for="stamp-5" class="stamp-box">
+                        <span class="stamp-number">5</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-6" class="stamp-checkbox">
+                    <label for="stamp-6" class="stamp-box">
+                        <span class="stamp-number">6</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-7" class="stamp-checkbox">
+                    <label for="stamp-7" class="stamp-box">
+                        <span class="stamp-number">7</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-8" class="stamp-checkbox">
+                    <label for="stamp-8" class="stamp-box">
+                        <span class="stamp-number">8</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <input type="checkbox" id="stamp-9" class="stamp-checkbox">
+                    <label for="stamp-9" class="stamp-box">
+                        <span class="stamp-number">9</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </label>
+
+                    <!-- Casilla 10 Especial Estrella -->
+                    <input type="checkbox" id="stamp-10" class="stamp-checkbox">
+                    <label for="stamp-10" class="stamp-box gold-reward">
+                        <span class="stamp-number">10</span>
+                        <svg class="stamp-icon" viewBox="0 0 24 24" fill="#d4af37">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <!-- Se enlaza directamente la información de Gota Express -->
+                <div class="contact-info">📞 Contacto: 0424-660-2973</div>
+                <div class="terms">
+                    Cada marca representa un servicio completado. Al completar el total de casillas reclamas tu premio.
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <button class="btn btn-share" onclick="generarTarjetaParaMovil()">📥 Guardar Imagen para WhatsApp</button>
+            <button class="btn btn-reset" onclick="resetCard()">🧹 Reiniciar Todo</button>
+        </div>
+    </div>
+
+    <!-- Pantalla emergente para guardar en móvil -->
+    <div id="modalGuardar" class="modal">
+        <p class="modal-instruction">📱 <b>Mantén presionada</b> la imagen de abajo para <b>Guardar</b> o <b>Compartir</b> por WhatsApp.</p>
+        <div class="modal-content">
+            <img id="imagenGenerada" class="modal-img" src="" alt="Tarjeta lista">
+            <button class="btn-close-modal" onclick="cerrarModal()">Volver a editar</button>
+        </div>
+    </div>
+
+    <script>
+        function generarTarjetaParaMovil() {
+            const tarjeta = document.getElementById('tarjeta-fidelidad');
+            const input = document.getElementById('client-name');
+            
+            // Reflejar el valor del input en el DOM antes de la foto
+            input.setAttribute('value', input.value);
+
+            const btn = document.querySelector('.btn-share');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Generando tarjeta...";
+            btn.style.opacity = "0.7";
+
+            // Opciones de máxima compatibilidad
+            const opciones = {
+                useCORS: true,
+                scale: 3, // Calidad excelente
+                backgroundColor: '#ffffff',
+                logging: false
+            };
+
+            html2canvas(tarjeta, opciones).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Mostramos la imagen en el recuadro flotante
+                const modal = document.getElementById('modalGuardar');
+                const modalImg = document.getElementById('imagenGenerada');
+                
+                modalImg.src = imgData;
+                modal.style.display = 'flex';
+
+                // Intentamos también la descarga directa de fondo por si acaso funciona (ej: en PC)
+                const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
+                const link = document.createElement('a');
+                link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
+                link.href = imgData;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Restaurar botón
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+            }).catch(err => {
+                alert("Hubo un error al procesar la imagen. Reintente.");
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+            });
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalGuardar').style.display = 'none';
+        }
+
+        function resetCard() {
+            if (confirm("¿Quieres limpiar el nombre y todas las marcas de esta tarjeta?")) {
+                const checkboxes = document.querySelectorAll('.stamp-checkbox');
+                checkboxes.forEach(cb => cb.checked = false);
+                document.getElementById('client-name').value = '';
+                document.getElementById('client-name').removeAttribute('value');
+            }
+        }
+    </script>
+</body>
+</html>
