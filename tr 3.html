@@ -241,6 +241,16 @@
             box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
         }
 
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp:active {
+            background-color: #1da851;
+        }
+
         .btn-reset {
             background-color: #e2e8f0;
             color: #475569;
@@ -401,7 +411,8 @@
         </div>
 
         <div class="control-panel">
-            <button class="btn btn-share" onclick="generarTarjetaParaMovil()">📥 Guardar Imagen para WhatsApp</button>
+            <button class="btn btn-whatsapp" onclick="compartirWhatsApp()">📤 Compartir por WhatsApp</button>
+            <button class="btn btn-share" onclick="generarTarjetaParaMovil()">📥 Guardar Imagen</button>
             <button class="btn btn-reset" onclick="resetCard()">🧹 Reiniciar Todo</button>
         </div>
     </div>
@@ -489,6 +500,56 @@
                 }, 'image/png');
             }).catch(err => {
                 alert("Hubo un error al procesar la imagen. Reintente.");
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+            });
+        }
+
+        function compartirWhatsApp() {
+            const tarjeta = document.getElementById('tarjeta-fidelidad');
+            const input = document.getElementById('client-name');
+            input.setAttribute('value', input.value);
+
+            const btn = document.querySelector('.btn-whatsapp');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Generando...";
+            btn.style.opacity = "0.7";
+
+            const opciones = {
+                useCORS: true,
+                scale: 3,
+                backgroundColor: '#ffffff',
+                logging: false
+            };
+
+            html2canvas(tarjeta, opciones).then(canvas => {
+                canvas.toBlob(function(blob) {
+                    if (navigator.share && navigator.canShare) {
+                        const file = new File([blob], 'tarjeta_fidelidad.png', { type: 'image/png' });
+                        const shareData = { files: [file] };
+
+                        if (navigator.canShare(shareData)) {
+                            navigator.share(shareData)
+                                .then(() => console.log('Compartido'))
+                                .catch(() => {
+                                    // Usuario cancelo, no hacer nada
+                                });
+                        }
+                    } else {
+                        // Fallback: mostrar modal con instrucciones
+                        const imgURL = URL.createObjectURL(blob);
+                        const modal = document.getElementById('modalGuardar');
+                        const modalImg = document.getElementById('imagenGenerada');
+                        const modalInstruction = document.querySelector('.modal-instruction');
+                        modalImg.src = imgURL;
+                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen y pulsa <b>"Guardar en Fotos"</b>. Luego compártela por WhatsApp.';
+                        modal.style.display = 'flex';
+                    }
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = "1";
+                }, 'image/png');
+            }).catch(err => {
+                alert("Error al procesar la imagen.");
                 btn.innerHTML = originalText;
                 btn.style.opacity = "1";
             });
