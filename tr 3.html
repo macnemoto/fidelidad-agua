@@ -416,6 +416,17 @@
     </div>
 
     <script>
+        function isIOSSafari() {
+            const ua = navigator.userAgent;
+            const isIOS = /iP(hone|ad|od)/.test(ua);
+            const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
+            return isIOS && isSafari;
+        }
+
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
         function generarTarjetaParaMovil() {
             const tarjeta = document.getElementById('tarjeta-fidelidad');
             const input = document.getElementById('client-name');
@@ -431,33 +442,51 @@
             // Opciones de máxima compatibilidad
             const opciones = {
                 useCORS: true,
-                scale: 3, // Calidad excelente
+                scale: 3,
                 backgroundColor: '#ffffff',
                 logging: false
             };
 
             html2canvas(tarjeta, opciones).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                
-                // Mostramos la imagen en el recuadro flotante
-                const modal = document.getElementById('modalGuardar');
-                const modalImg = document.getElementById('imagenGenerada');
-                
-                modalImg.src = imgData;
-                modal.style.display = 'flex';
+                canvas.toBlob(function(blob) {
+                    const imgURL = URL.createObjectURL(blob);
+                    const modal = document.getElementById('modalGuardar');
+                    const modalImg = document.getElementById('imagenGenerada');
+                    const modalInstruction = document.querySelector('.modal-instruction');
 
-                // Intentamos también la descarga directa de fondo por si acaso funciona (ej: en PC)
-                const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
-                const link = document.createElement('a');
-                link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
-                link.href = imgData;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                    modalImg.src = imgURL;
+                    modal.style.display = 'flex';
 
-                // Restaurar botón
-                btn.innerHTML = originalText;
-                btn.style.opacity = "1";
+                    if (isIOSSafari()) {
+                        // En iOS Safari: instrucciones claras para guardar manualmente
+                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen y pulsa <b>"Guardar en Fotos"</b>. Luego compártela por WhatsApp.';
+                        // No intentar descarga automatica, Safari la bloquea
+                    } else if (isMobileDevice()) {
+                        // En Android u otros moviles: intentar descarga + modal
+                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen para <b>Guardar</b> o <b>Compartir</b> por WhatsApp.';
+                        const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
+                        const link = document.createElement('a');
+                        link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
+                        link.href = imgURL;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else {
+                        // En PC: descarga directa
+                        modalInstruction.innerHTML = '📥 La imagen se ha descargado. Si no apareció, <b>clic derecho → Guardar imagen</b>.';
+                        const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
+                        const link = document.createElement('a');
+                        link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
+                        link.href = imgURL;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+
+                    // Restaurar boton
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = "1";
+                }, 'image/png');
             }).catch(err => {
                 alert("Hubo un error al procesar la imagen. Reintente.");
                 btn.innerHTML = originalText;
