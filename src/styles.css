@@ -20,6 +20,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .page-heading h1 { color: var(--dark); font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 4px 0 8px; }
 .page-heading p { color: #5b677a; margin: 0; }
 .eyebrow { color: var(--primary); font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.client-tabs { background: #dbeaf1; border-radius: 14px; display: grid; gap: 4px; grid-template-columns: repeat(2, 1fr); margin: 0 0 14px; padding: 4px; }
+.client-tabs button { background: transparent; border: 0; border-radius: 10px; color: #4a5b70; cursor: pointer; font-weight: 800; padding: 11px; }
+.client-tabs button.active { background: #fff; box-shadow: 0 2px 8px rgba(18,67,90,.12); color: var(--dark); }
 .workspace { align-items: start; display: grid; gap: 22px; grid-template-columns: minmax(250px, .8fr) minmax(320px, 400px); justify-content: center; }
 
 .search-panel { align-items: end; background: #fff; border: 1px solid #dbe7ef; border-radius: 18px; box-shadow: 0 8px 26px rgba(18,67,90,.08); display: flex; gap: 24px; justify-content: space-between; margin-bottom: 14px; padding: 18px 20px; }
@@ -47,8 +50,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .progress-summary { align-items: center; border-top: 1px solid #e8eef2; display: flex; justify-content: space-between; margin-top: 18px; padding-top: 14px; }
 .progress-summary strong { color: var(--primary); font-size: 1.25rem; }
 .admin-panel > .btn { margin-top: 12px; width: 100%; }
+.admin-panel form > .btn { margin-top: 12px; width: 100%; }
+.edit-client-form { margin-top: 4px; }
 .btn-save { background: var(--primary); color: #fff; }
 .btn-redeem { background: #fdb022; color: #4e1d09; }
+.btn-secondary { background: #e2f1f8; border: 1px solid var(--primary-light); color: var(--dark); }
+.readonly { background: #edf2f5; }
+.readonly input { color: #667085; cursor: not-allowed; }
 .status { border-radius: 10px; font-size: .84rem; line-height: 1.4; margin: 12px 0 0; padding: 10px 12px; }
 .status.error { background: #fff1f0; color: #b42318; }
 .status.success { background: #ecfdf3; color: #067647; }
@@ -77,7 +85,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .control-panel { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); margin: 22px auto 0; max-width: 720px; }
 .btn { border: 0; border-radius: 11px; cursor: pointer; font-weight: 800; padding: 13px; transition: .16s ease; }
-.btn:disabled { cursor: wait; opacity: .6; }
+.btn:disabled, .client-tabs button:disabled { cursor: not-allowed; opacity: .6; }
 .btn-whatsapp { background: #25d366; color: #fff; }
 .btn-download { background: var(--primary); color: #fff; }
 .btn-reset { background: #e2e8f0; border: 1px solid #cbd5e1; color: #475569; }

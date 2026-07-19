@@ -3,25 +3,32 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const rpc = vi.fn()
 vi.mock('../lib/supabase', () => ({ requireSupabase: () => ({ rpc }) }))
 
-import { findClient, getClientHistory, saveClient } from './clients'
+import { createClient, findClient, getClientHistory, updateClient } from './clients'
+
+function mockRpcResponse(response: unknown) {
+  rpc.mockReturnValue({ abortSignal: vi.fn().mockResolvedValue(response) })
+}
 
 describe('servicio de clientes', () => {
   beforeEach(() => rpc.mockReset())
 
   it('devuelve null cuando no existe la cédula', async () => {
-    rpc.mockResolvedValue({ data: [], error: null })
+    mockRpcResponse({ data: [], error: null })
     await expect(findClient('V-12.345.678')).resolves.toBeNull()
     expect(rpc).toHaveBeenCalledWith('find_client', { p_cedula: '12345678' })
   })
 
-  it('guarda mediante la función transaccional', async () => {
+  it('crea y actualiza mediante funciones separadas', async () => {
     const client = { id: '1', cedula: '12345678', name: 'María', purchase_count: 4, created_at: '', updated_at: '' }
-    rpc.mockResolvedValue({ data: [client], error: null })
-    await expect(saveClient('12345678', ' María ', 4)).resolves.toEqual(client)
+    mockRpcResponse({ data: [client], error: null })
+    await expect(createClient('12345678', ' María ', 4)).resolves.toEqual(client)
+    expect(rpc).toHaveBeenLastCalledWith('create_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
+    await expect(updateClient('12345678', ' María ', 4)).resolves.toEqual(client)
+    expect(rpc).toHaveBeenLastCalledWith('update_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
   })
 
   it('limita el historial desde el servicio', async () => {
-    rpc.mockResolvedValue({ data: [], error: null })
+    mockRpcResponse({ data: [], error: null })
     await expect(getClientHistory('12345678')).resolves.toEqual([])
     expect(rpc).toHaveBeenCalledWith('get_client_history', { p_cedula: '12345678', p_limit: 10 })
   })
