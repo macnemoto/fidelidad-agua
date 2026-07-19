@@ -41,6 +41,73 @@
             gap: 15px;
         }
 
+        .admin-panel {
+            background: #ffffff;
+            border: 1px solid #dbe7ef;
+            border-radius: 15px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            padding: 15px;
+        }
+
+        .admin-title {
+            color: var(--dark);
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .admin-field {
+            margin-bottom: 10px;
+        }
+
+        .admin-field:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .admin-field label {
+            display: block;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .cedula-input-wrapper {
+            align-items: center;
+            background: #fafbfc;
+            border: 2px solid var(--primary-bg);
+            border-radius: 10px;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .cedula-prefix {
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            padding-left: 12px;
+        }
+
+        .cedula-input-wrapper .client-input {
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .cedula-input-wrapper:focus-within {
+            border-color: var(--primary-light);
+            background: #ffffff;
+        }
+
+        .validation-message {
+            color: #b42318;
+            font-size: 12px;
+            line-height: 1.35;
+            margin-top: 8px;
+        }
+
         .card-container {
             background: #ffffff;
             border-radius: 20px;
@@ -60,36 +127,10 @@
         .brand-logo {
             font-size: 26px;
             font-weight: 800;
-            margin-bottom: 5px;
-        }
-
-        .brand-tagline {
-            font-size: 13px;
-            opacity: 0.9;
-            font-weight: 500;
         }
 
         .card-body {
             padding: 20px 15px;
-        }
-
-        .client-section {
-            margin-bottom: 20px;
-        }
-
-        .client-label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .input-wrapper {
-            position: relative;
-            width: 100%;
         }
 
         .client-input {
@@ -105,24 +146,47 @@
             background-color: #fafbfc;
         }
 
-        .client-input:focus {
+        .admin-panel .client-input:focus {
             border-color: var(--primary-light);
             background-color: #ffffff;
         }
 
-        .instructions {
-            text-align: center;
-            font-size: 13px;
-            color: var(--text);
-            margin-bottom: 20px;
-            line-height: 1.4;
+        .client-summary {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .client-data {
+            align-items: baseline;
+            border-bottom: 1px solid #edf2f5;
+            display: flex;
+            gap: 8px;
+            min-width: 0;
+            padding-bottom: 7px;
+        }
+
+        .client-data-label {
+            color: var(--primary);
+            flex: 0 0 auto;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .client-data-value {
+            color: var(--dark);
+            font-size: 15px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
         }
 
         .grid-container {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         /* Alineación limpia usando Flexbox para evitar que los iconos se desvíen */
@@ -177,7 +241,7 @@
             transform: scale(1);
         }
 
-        /* Casilla 10 Especial */
+        /* Casilla 10: tanque gratis */
         .stamp-box.gold-reward {
             background-color: #fffdf0;
             border: 2.5px solid var(--gold);
@@ -197,20 +261,14 @@
         .card-footer {
             background-color: #fafbfc;
             border-top: 1px solid #f0f0f0;
-            padding: 15px;
+            padding: 12px 15px;
             text-align: center;
         }
 
-        .contact-info {
-            font-weight: 700;
-            font-size: 15px;
+        .reward-message {
             color: var(--dark);
-            margin-bottom: 8px;
-        }
-
-        .terms {
-            font-size: 10px;
-            color: #777;
+            font-size: 12px;
+            font-weight: 600;
             line-height: 1.4;
         }
 
@@ -321,26 +379,41 @@
 <body>
 
     <div class="wrapper">
+        <section class="admin-panel" aria-label="Datos del cliente">
+            <div class="admin-title">Datos del cliente</div>
+            <div class="admin-field">
+                <label for="client-name">Nombre completo</label>
+                <input type="text" id="client-name" class="client-input" placeholder="Escribe el nombre aquí..." autocomplete="off" maxlength="60">
+            </div>
+            <div class="admin-field">
+                <label for="client-id">Cédula venezolana</label>
+                <div class="cedula-input-wrapper">
+                    <span class="cedula-prefix">V-</span>
+                    <input type="text" id="client-id" class="client-input" placeholder="12.345.678" inputmode="numeric" autocomplete="off" maxlength="10">
+                </div>
+            </div>
+            <p id="client-error" class="validation-message" role="alert" hidden></p>
+        </section>
+
         <div class="card-container" id="tarjeta-fidelidad">
             <div class="card-header">
-                <div class="brand-logo">💧 Tarjeta de Fidelidad<span>.</span></div>
-                <div class="brand-tagline">¡Premio a tu constancia y preferencia!</div>
+                <div class="brand-logo">💧 Tarjeta de Fidelidad</div>
             </div>
 
             <div class="card-body">
-                <div class="client-section">
-                    <label class="client-label" for="client-name">Cliente / Titular</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="client-name" class="client-input" placeholder="Escribe el nombre aquí..." autocomplete="off">
+                <div class="client-summary" aria-label="Datos del titular">
+                    <div class="client-data">
+                        <span class="client-data-label">Nombre:</span>
+                        <strong id="card-client-name" class="client-data-value">Pendiente</strong>
+                    </div>
+                    <div class="client-data">
+                        <span class="client-data-label">Cédula:</span>
+                        <strong id="card-client-id" class="client-data-value">V- Pendiente</strong>
                     </div>
                 </div>
 
-                <p class="instructions">
-                    Toca cada casilla para marcar tu servicio. ¡Al completar 9 marcas, la <b>Casilla 10</b> es totalmente gratis!
-                </p>
-
                 <div class="grid-container">
-                    <!-- Casillas 1 a 9 con SVGs rediseñados y estables -->
+                    <!-- Casillas 1 a 9 -->
                     <input type="checkbox" id="stamp-1" class="stamp-checkbox">
                     <label for="stamp-1" class="stamp-box">
                         <span class="stamp-number">1</span>
@@ -395,23 +468,19 @@
                         <svg class="stamp-icon" viewBox="0 0 24 24" fill="#00b4d8"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
                     </label>
 
-                    <!-- Casilla 10 Especial Estrella -->
+                    <!-- Casilla 10: tanque gratis -->
                     <input type="checkbox" id="stamp-10" class="stamp-checkbox">
                     <label for="stamp-10" class="stamp-box gold-reward">
                         <span class="stamp-number">10</span>
                         <svg class="stamp-icon" viewBox="0 0 24 24" fill="#d4af37">
-                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
                         </svg>
                     </label>
                 </div>
             </div>
 
             <div class="card-footer">
-                <!-- Se enlaza directamente la información de Gota Express -->
-                <div class="contact-info">📞 Contacto: 0424-660-2973</div>
-                <div class="terms">
-                    Cada marca representa un servicio completado. Al completar el total de casillas reclamas tu premio.
-                </div>
+                <div class="reward-message">Al completar 9 compras, tu tanque de agua N.º 10 es <strong>GRATIS</strong>.</div>
             </div>
         </div>
 
@@ -438,6 +507,58 @@
         let urlPreparada = null;
         let nombreArchivoPreparado = 'tarjeta_fidelidad_cliente.png';
         let generandoTarjeta = false;
+
+        function formatearCedula(valor) {
+            const digitos = String(valor || '').replace(/\D/g, '').slice(0, 8);
+            return digitos.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function mostrarErrorCliente(mensaje) {
+            const error = document.getElementById('client-error');
+            error.textContent = mensaje;
+            error.hidden = !mensaje;
+        }
+
+        function sincronizarVistaCliente() {
+            const nombre = document.getElementById('client-name').value.trim();
+            const cedula = formatearCedula(document.getElementById('client-id').value);
+            document.getElementById('card-client-name').textContent = nombre || 'Pendiente';
+            document.getElementById('card-client-id').textContent = cedula ? `V-${cedula}` : 'V- Pendiente';
+        }
+
+        function validarDatosCliente() {
+            const nombre = document.getElementById('client-name').value.trim();
+            const cedula = document.getElementById('client-id').value.replace(/\D/g, '');
+
+            if (!nombre) {
+                mostrarErrorCliente('Escribe el nombre completo del cliente.');
+                document.getElementById('client-name').focus();
+                return false;
+            }
+
+            if (cedula.length < 5 || cedula.length > 8) {
+                mostrarErrorCliente('La cédula debe tener entre 5 y 8 números.');
+                document.getElementById('client-id').focus();
+                return false;
+            }
+
+            mostrarErrorCliente('');
+            sincronizarVistaCliente();
+            return true;
+        }
+
+        function configurarMarcadoSecuencial() {
+            document.querySelectorAll('.stamp-box').forEach(casilla => {
+                casilla.addEventListener('click', evento => {
+                    evento.preventDefault();
+                    const numeroSeleccionado = Number(casilla.htmlFor.replace('stamp-', ''));
+                    document.querySelectorAll('.stamp-checkbox').forEach(checkbox => {
+                        const numero = Number(checkbox.id.replace('stamp-', ''));
+                        checkbox.checked = numero <= numeroSeleccionado;
+                    });
+                });
+            });
+        }
 
         function detectarEntorno() {
             const ua = navigator.userAgent || '';
@@ -514,9 +635,13 @@
                 throw new Error('La librería de imágenes no está disponible.');
             }
 
+            if (!validarDatosCliente()) {
+                throw new Error('Completa los datos del cliente antes de generar la tarjeta.');
+            }
+
             const tarjeta = document.getElementById('tarjeta-fidelidad');
+            sincronizarVistaCliente();
             const input = document.getElementById('client-name');
-            input.setAttribute('value', input.value);
 
             const canvas = await html2canvas(tarjeta, {
                 useCORS: true,
@@ -666,13 +791,27 @@
         function resetCard() {
             if (confirm('¿Quieres limpiar el nombre y todas las marcas de esta tarjeta?')) {
                 document.querySelectorAll('.stamp-checkbox').forEach(cb => cb.checked = false);
-                const input = document.getElementById('client-name');
-                input.value = '';
-                input.removeAttribute('value');
+                document.getElementById('client-name').value = '';
+                document.getElementById('client-id').value = '';
+                mostrarErrorCliente('');
+                sincronizarVistaCliente();
                 cerrarModal();
             }
         }
 
+        document.getElementById('client-name').addEventListener('input', () => {
+            sincronizarVistaCliente();
+            mostrarErrorCliente('');
+        });
+
+        document.getElementById('client-id').addEventListener('input', evento => {
+            evento.target.value = evento.target.value.replace(/\D/g, '').slice(0, 8);
+            sincronizarVistaCliente();
+            mostrarErrorCliente('');
+        });
+
+        sincronizarVistaCliente();
+        configurarMarcadoSecuencial();
         configurarInterfazSegunEntorno();
     </script>
 </body>
