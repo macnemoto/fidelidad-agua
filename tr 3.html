@@ -235,6 +235,10 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        .btn:disabled {
+            cursor: wait;
+        }
+
         .btn-share {
             background-color: #25D366;
             color: #ffffff;
@@ -282,6 +286,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 10px;
         }
 
         .modal-img {
@@ -422,151 +427,253 @@
         <p class="modal-instruction">📱 <b>Mantén presionada</b> la imagen de abajo para <b>Guardar</b> o <b>Compartir</b> por WhatsApp.</p>
         <div class="modal-content">
             <img id="imagenGenerada" class="modal-img" src="" alt="Tarjeta lista">
+            <button id="btnCompartirPreparada" class="btn btn-whatsapp" type="button" onclick="compartirImagenPreparada()" hidden>📤 Compartir o guardar en iPhone</button>
             <button class="btn-close-modal" onclick="cerrarModal()">Volver a editar</button>
         </div>
     </div>
 
     <script>
-        function isIOSSafari() {
-            const ua = navigator.userAgent;
-            const isIOS = /iP(hone|ad|od)/.test(ua);
-            const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
-            return isIOS && isSafari;
+        const entorno = detectarEntorno();
+        let archivoPreparado = null;
+        let urlPreparada = null;
+        let nombreArchivoPreparado = 'tarjeta_fidelidad_cliente.png';
+        let generandoTarjeta = false;
+
+        function detectarEntorno() {
+            const ua = navigator.userAgent || '';
+            const esIOSClasico = /iPhone|iPad|iPod/i.test(ua);
+            const esIPadModoEscritorio = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+            const esIOS = esIOSClasico || esIPadModoEscritorio;
+            const esAndroid = /Android/i.test(ua);
+            const esMovil = esIOS || esAndroid || /webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+            let puedeCompartirArchivos = false;
+
+            if (window.isSecureContext && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && typeof File === 'function') {
+                try {
+                    const archivoPrueba = new File(['prueba'], 'prueba.png', { type: 'image/png' });
+                    puedeCompartirArchivos = navigator.canShare({ files: [archivoPrueba] });
+                } catch (error) {
+                    puedeCompartirArchivos = false;
+                }
+            }
+
+            return {
+                esIOS,
+                esAndroid,
+                esMovil,
+                esContextoSeguro: Boolean(window.isSecureContext),
+                puedeCompartirArchivos
+            };
         }
 
-        function isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        function configurarInterfazSegunEntorno() {
+            const btnWhatsApp = document.querySelector('.btn-whatsapp');
+            const btnGuardar = document.querySelector('.btn-share');
+
+            if (entorno.esIOS) {
+                btnWhatsApp.innerHTML = '📤 Preparar para compartir';
+                btnGuardar.innerHTML = '📥 Preparar imagen';
+            } else if (entorno.esAndroid) {
+                btnWhatsApp.innerHTML = '📤 Compartir por WhatsApp';
+                btnGuardar.innerHTML = '📥 Guardar imagen';
+            } else {
+                btnWhatsApp.innerHTML = '📤 Compartir imagen';
+                btnGuardar.innerHTML = '📥 Descargar imagen';
+            }
+        }
+
+        function limpiarURLPreparada() {
+            if (urlPreparada) {
+                URL.revokeObjectURL(urlPreparada);
+                urlPreparada = null;
+            }
+        }
+
+        function sanitizarNombreArchivo(nombre) {
+            const seguro = nombre.trim()
+                .replace(/[\\/:*?"<>|]/g, '')
+                .replace(/\s+/g, '_')
+                .slice(0, 60);
+            return seguro || 'cliente';
+        }
+
+        function convertirCanvasABlob(canvas) {
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('No se pudo crear la imagen PNG.'));
+                    }
+                }, 'image/png');
+            });
+        }
+
+        async function generarArchivoTarjeta() {
+            if (typeof html2canvas !== 'function') {
+                throw new Error('La librería de imágenes no está disponible.');
+            }
+
+            const tarjeta = document.getElementById('tarjeta-fidelidad');
+            const input = document.getElementById('client-name');
+            input.setAttribute('value', input.value);
+
+            const canvas = await html2canvas(tarjeta, {
+                useCORS: true,
+                scale: 3,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            const blob = await convertirCanvasABlob(canvas);
+            const nombre = `tarjeta_fidelidad_${sanitizarNombreArchivo(input.value)}.png`;
+            return {
+                blob,
+                file: new File([blob], nombre, { type: 'image/png' }),
+                nombre
+            };
+        }
+
+        function guardarImagenEnDispositivo() {
+            if (!urlPreparada) return;
+            const link = document.createElement('a');
+            link.download = nombreArchivoPreparado;
+            link.href = urlPreparada;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function mostrarModal(resultado, origen) {
+            limpiarURLPreparada();
+            archivoPreparado = resultado.file;
+            nombreArchivoPreparado = resultado.nombre;
+            urlPreparada = URL.createObjectURL(resultado.blob);
+
+            const modal = document.getElementById('modalGuardar');
+            const modalImg = document.getElementById('imagenGenerada');
+            const instruccion = document.querySelector('.modal-instruction');
+            const btnCompartir = document.getElementById('btnCompartirPreparada');
+
+            modalImg.src = urlPreparada;
+            btnCompartir.hidden = !entorno.puedeCompartirArchivos;
+
+            if (entorno.esIOS) {
+                instruccion.innerHTML = entorno.puedeCompartirArchivos
+                    ? '📱 La imagen está lista. Pulsa <b>Compartir o guardar en iPhone</b> y selecciona WhatsApp o <b>Guardar imagen</b>.'
+                    : '📱 <b>Mantén presionada</b> la imagen y pulsa <b>Guardar en Fotos</b>. Luego compártela por WhatsApp.';
+                btnCompartir.innerHTML = '📤 Compartir o guardar en iPhone';
+            } else if (origen === 'compartir' && entorno.puedeCompartirArchivos) {
+                instruccion.innerHTML = 'Selecciona WhatsApp en el menú de compartir.';
+                btnCompartir.innerHTML = '📤 Compartir imagen';
+            } else if (entorno.esAndroid) {
+                instruccion.innerHTML = '📱 Mantén presionada la imagen para guardarla o compartirla.';
+            } else {
+                instruccion.innerHTML = '📥 La imagen está lista. Si no se descargó, haz clic derecho y selecciona <b>Guardar imagen</b>.';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function cambiarEstadoBotones(ocupado) {
+            document.querySelectorAll('.control-panel .btn').forEach(btn => {
+                btn.disabled = ocupado;
+                btn.style.opacity = ocupado ? '0.7' : '1';
+            });
+        }
+
+        async function prepararTarjeta(origen) {
+            if (generandoTarjeta) return;
+            generandoTarjeta = true;
+            cambiarEstadoBotones(true);
+
+            try {
+                const resultado = await generarArchivoTarjeta();
+                mostrarModal(resultado, origen);
+
+                if (!entorno.esIOS && origen === 'guardar') {
+                    guardarImagenEnDispositivo();
+                }
+            } catch (error) {
+                console.error(error);
+                alert(error.message || 'Hubo un error al procesar la imagen. Reintente.');
+            } finally {
+                generandoTarjeta = false;
+                cambiarEstadoBotones(false);
+            }
         }
 
         function generarTarjetaParaMovil() {
-            const tarjeta = document.getElementById('tarjeta-fidelidad');
-            const input = document.getElementById('client-name');
-            
-            // Reflejar el valor del input en el DOM antes de la foto
-            input.setAttribute('value', input.value);
-
-            const btn = document.querySelector('.btn-share');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Generando tarjeta...";
-            btn.style.opacity = "0.7";
-
-            // Opciones de máxima compatibilidad
-            const opciones = {
-                useCORS: true,
-                scale: 3,
-                backgroundColor: '#ffffff',
-                logging: false
-            };
-
-            html2canvas(tarjeta, opciones).then(canvas => {
-                canvas.toBlob(function(blob) {
-                    const imgURL = URL.createObjectURL(blob);
-                    const modal = document.getElementById('modalGuardar');
-                    const modalImg = document.getElementById('imagenGenerada');
-                    const modalInstruction = document.querySelector('.modal-instruction');
-
-                    modalImg.src = imgURL;
-                    modal.style.display = 'flex';
-
-                    if (isIOSSafari()) {
-                        // En iOS Safari: instrucciones claras para guardar manualmente
-                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen y pulsa <b>"Guardar en Fotos"</b>. Luego compártela por WhatsApp.';
-                        // No intentar descarga automatica, Safari la bloquea
-                    } else if (isMobileDevice()) {
-                        // En Android u otros moviles: intentar descarga + modal
-                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen para <b>Guardar</b> o <b>Compartir</b> por WhatsApp.';
-                        const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
-                        const link = document.createElement('a');
-                        link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
-                        link.href = imgURL;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    } else {
-                        // En PC: descarga directa
-                        modalInstruction.innerHTML = '📥 La imagen se ha descargado. Si no apareció, <b>clic derecho → Guardar imagen</b>.';
-                        const nombreCliente = input.value.trim().replace(/\s+/g, '_') || 'cliente';
-                        const link = document.createElement('a');
-                        link.download = `tarjeta_fidelidad_${nombreCliente}.png`;
-                        link.href = imgURL;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
-
-                    // Restaurar boton
-                    btn.innerHTML = originalText;
-                    btn.style.opacity = "1";
-                }, 'image/png');
-            }).catch(err => {
-                alert("Hubo un error al procesar la imagen. Reintente.");
-                btn.innerHTML = originalText;
-                btn.style.opacity = "1";
-            });
+            prepararTarjeta('guardar');
         }
 
-        function compartirWhatsApp() {
-            const tarjeta = document.getElementById('tarjeta-fidelidad');
-            const input = document.getElementById('client-name');
-            input.setAttribute('value', input.value);
+        async function compartirImagenPreparada() {
+            if (!archivoPreparado || !entorno.puedeCompartirArchivos) return;
 
-            const btn = document.querySelector('.btn-whatsapp');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Generando...";
-            btn.style.opacity = "0.7";
+            try {
+                await navigator.share({ files: [archivoPreparado] });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    alert('No se pudo abrir el menú de compartir. Puedes mantener presionada la imagen para guardarla.');
+                }
+            }
+        }
 
-            const opciones = {
-                useCORS: true,
-                scale: 3,
-                backgroundColor: '#ffffff',
-                logging: false
-            };
+        async function compartirWhatsApp() {
+            if (generandoTarjeta) return;
 
-            html2canvas(tarjeta, opciones).then(canvas => {
-                canvas.toBlob(function(blob) {
-                    if (navigator.share && navigator.canShare) {
-                        const file = new File([blob], 'tarjeta_fidelidad.png', { type: 'image/png' });
-                        const shareData = { files: [file] };
+            // En iPhone la imagen se prepara en esta pulsación y se comparte en una segunda.
+            if (entorno.esIOS) {
+                await prepararTarjeta('compartir');
+                return;
+            }
 
-                        if (navigator.canShare(shareData)) {
-                            navigator.share(shareData)
-                                .then(() => console.log('Compartido'))
-                                .catch(() => {
-                                    // Usuario cancelo, no hacer nada
-                                });
+            if (entorno.puedeCompartirArchivos) {
+                generandoTarjeta = true;
+                cambiarEstadoBotones(true);
+                let resultadoGenerado = null;
+                try {
+                    resultadoGenerado = await generarArchivoTarjeta();
+                    limpiarURLPreparada();
+                    archivoPreparado = resultadoGenerado.file;
+                    nombreArchivoPreparado = resultadoGenerado.nombre;
+                    urlPreparada = URL.createObjectURL(resultadoGenerado.blob);
+                    await navigator.share({ files: [archivoPreparado] });
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        if (resultadoGenerado) {
+                            mostrarModal(resultadoGenerado, 'compartir');
+                        } else {
+                            alert(error.message || 'No se pudo compartir la imagen.');
                         }
-                    } else {
-                        // Fallback: mostrar modal con instrucciones
-                        const imgURL = URL.createObjectURL(blob);
-                        const modal = document.getElementById('modalGuardar');
-                        const modalImg = document.getElementById('imagenGenerada');
-                        const modalInstruction = document.querySelector('.modal-instruction');
-                        modalImg.src = imgURL;
-                        modalInstruction.innerHTML = '📱 <b>Mantén presionada</b> la imagen y pulsa <b>"Guardar en Fotos"</b>. Luego compártela por WhatsApp.';
-                        modal.style.display = 'flex';
                     }
-                    btn.innerHTML = originalText;
-                    btn.style.opacity = "1";
-                }, 'image/png');
-            }).catch(err => {
-                alert("Error al procesar la imagen.");
-                btn.innerHTML = originalText;
-                btn.style.opacity = "1";
-            });
+                } finally {
+                    generandoTarjeta = false;
+                    cambiarEstadoBotones(false);
+                }
+                return;
+            }
+
+            await prepararTarjeta('compartir');
         }
 
         function cerrarModal() {
             document.getElementById('modalGuardar').style.display = 'none';
+            document.getElementById('imagenGenerada').removeAttribute('src');
+            archivoPreparado = null;
+            limpiarURLPreparada();
         }
 
         function resetCard() {
-            if (confirm("¿Quieres limpiar el nombre y todas las marcas de esta tarjeta?")) {
-                const checkboxes = document.querySelectorAll('.stamp-checkbox');
-                checkboxes.forEach(cb => cb.checked = false);
-                document.getElementById('client-name').value = '';
-                document.getElementById('client-name').removeAttribute('value');
+            if (confirm('¿Quieres limpiar el nombre y todas las marcas de esta tarjeta?')) {
+                document.querySelectorAll('.stamp-checkbox').forEach(cb => cb.checked = false);
+                const input = document.getElementById('client-name');
+                input.value = '';
+                input.removeAttribute('value');
+                cerrarModal();
             }
         }
+
+        configurarInterfazSegunEntorno();
     </script>
 </body>
 </html>
