@@ -2,6 +2,7 @@ import type { ClientMovement, MovementAction } from '../types/client'
 
 const actionLabels: Record<MovementAction, string> = {
   created: 'Cliente creado',
+  purchase_registered: 'Venta registrada',
   progress_updated: 'Progreso actualizado',
   profile_updated: 'Nombre actualizado',
   reward_redeemed: 'Beneficio canjeado',

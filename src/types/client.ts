@@ -1,4 +1,4 @@
-export type MovementAction = 'created' | 'progress_updated' | 'profile_updated' | 'reward_redeemed'
+export type MovementAction = 'created' | 'purchase_registered' | 'progress_updated' | 'profile_updated' | 'reward_redeemed'
 
 export interface Client {
   id: string
