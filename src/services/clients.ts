@@ -29,11 +29,11 @@ async function runRpc<T>(name: string, args: Record<string, unknown>): Promise<T
 }
 
 export async function findClient(cedula: string): Promise<Client | null> {
-  return firstOrNull<Client>(await runRpc<unknown>('find_client', { p_cedula: normalizeCedula(cedula) }))
+  return firstOrNull<Client>(await runRpc<unknown>('admin_find_client', { p_cedula: normalizeCedula(cedula) }))
 }
 
 export async function createClient(cedula: string, name: string, purchaseCount: number): Promise<Client> {
-  const client = firstOrNull<Client>(await runRpc<unknown>('create_client', {
+  const client = firstOrNull<Client>(await runRpc<unknown>('admin_create_client', {
     p_cedula: normalizeCedula(cedula), p_name: name.trim(), p_purchase_count: purchaseCount,
   }))
   if (!client) throw new Error('Supabase no devolvió el cliente creado.')
@@ -41,7 +41,7 @@ export async function createClient(cedula: string, name: string, purchaseCount: 
 }
 
 export async function updateClient(cedula: string, name: string, purchaseCount: number): Promise<Client> {
-  const client = firstOrNull<Client>(await runRpc<unknown>('update_client', {
+  const client = firstOrNull<Client>(await runRpc<unknown>('admin_update_client', {
     p_cedula: normalizeCedula(cedula), p_name: name.trim(), p_purchase_count: purchaseCount,
   }))
   if (!client) throw new Error('Supabase no devolvió el cliente actualizado.')
@@ -49,12 +49,12 @@ export async function updateClient(cedula: string, name: string, purchaseCount: 
 }
 
 export async function getClientHistory(cedula: string): Promise<ClientMovement[]> {
-  const data = await runRpc<unknown>('get_client_history', { p_cedula: normalizeCedula(cedula), p_limit: 10 })
+  const data = await runRpc<unknown>('admin_get_client_history', { p_cedula: normalizeCedula(cedula), p_limit: 10 })
   return Array.isArray(data) ? data as ClientMovement[] : []
 }
 
 export async function redeemReward(cedula: string): Promise<Client> {
-  const client = firstOrNull<Client>(await runRpc<unknown>('redeem_reward', { p_cedula: normalizeCedula(cedula) }))
+  const client = firstOrNull<Client>(await runRpc<unknown>('admin_redeem_reward', { p_cedula: normalizeCedula(cedula) }))
   if (!client) throw new Error('Supabase no devolvió el cliente actualizado.')
   return client
 }

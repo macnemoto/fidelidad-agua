@@ -1,47 +1,30 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  findClient: vi.fn(),
-  getClientHistory: vi.fn(),
-  redeemReward: vi.fn(),
-  updateClient: vi.fn(),
-}))
-
+const mocks = vi.hoisted(() => ({ getSession: vi.fn(), signInWithPin: vi.fn(), signOut: vi.fn() }))
 vi.mock('./lib/supabase', () => ({ isSupabaseConfigured: true }))
-vi.mock('./services/clients', () => mocks)
+vi.mock('./services/auth', () => mocks)
+vi.mock('./services/clients', () => ({ createClient: vi.fn(), findClient: vi.fn(), getClientHistory: vi.fn(), redeemReward: vi.fn(), updateClient: vi.fn() }))
+vi.mock('./services/dashboard', () => ({ registerPurchase: vi.fn(), getDashboardSummary: vi.fn().mockResolvedValue({}), getDailyPurchases: vi.fn().mockResolvedValue([]), getDashboardActivity: vi.fn().mockResolvedValue([]), getDashboardClients: vi.fn().mockResolvedValue([]) }))
 vi.mock('./hooks/useCardExport', () => ({ useCardExport: () => ({ busy: false, imageUrl: null, isIOS: false, canSharePrepared: false, prepareDownload: vi.fn(), prepareShare: vi.fn(), sharePrepared: vi.fn(), closeModal: vi.fn() }) }))
-
 import App from './App'
 
-describe('flujo de clientes', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.getClientHistory.mockResolvedValue([]) })
-
-  it('crea un cliente con nombre, cédula y fidelidad', async () => {
-    mocks.createClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 3, created_at: '', updated_at: '' })
+describe('acceso administrativo', () => {
+  beforeEach(() => { vi.clearAllMocks(); mocks.getSession.mockResolvedValue(null) })
+  it('solicita un PIN de ocho dígitos antes de mostrar el panel', async () => {
     render(<App />)
-    fireEvent.change(screen.getByLabelText('Cédula venezolana'), { target: { value: '12345678' } })
-    fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: 'María Pérez' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Marcar 3 compras' }))
-    fireEvent.click(screen.getByRole('button', { name: '➕ Guardar nuevo cliente' }))
-    await waitFor(() => expect(mocks.createClient).toHaveBeenCalledWith('12345678', 'María Pérez', 3))
-    expect(await screen.findByText('Cliente creado correctamente.')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('María Pérez')).toBeInTheDocument()
+    expect(await screen.findByText('Introduce el PIN administrativo para continuar.')).toBeInTheDocument()
+    const enter = screen.getByRole('button', { name: 'Entrar al panel' })
+    expect(enter).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('PIN de 8 dígitos'), { target: { value: '12345678' } })
+    expect(enter).toBeEnabled()
   })
-
-  it('busca, carga y actualiza un cliente sin editar su cédula', async () => {
-    mocks.findClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 6, created_at: '', updated_at: '' })
-    mocks.updateClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María P.', purchase_count: 7, created_at: '', updated_at: '' })
+  it('muestra el error de acceso sin revelar detalles', async () => {
+    mocks.signInWithPin.mockRejectedValue(new Error('PIN incorrecto o acceso no autorizado.'))
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Buscar cliente' }))
-    fireEvent.change(screen.getByLabelText('Cédula venezolana'), { target: { value: '12345678' } })
-    fireEvent.click(screen.getByRole('button', { name: '🔎 Buscar cliente' }))
-    expect(await screen.findByDisplayValue('María Pérez')).toBeInTheDocument()
-    expect(screen.getByLabelText('Cédula', { exact: true })).toHaveAttribute('readonly')
-    fireEvent.change(screen.getByDisplayValue('María Pérez'), { target: { value: 'María P.' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Marcar 7 compras' }))
-    fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
-    await waitFor(() => expect(mocks.updateClient).toHaveBeenCalledWith('12345678', 'María P.', 7))
+    const pin = await screen.findByLabelText('PIN de 8 dígitos')
+    fireEvent.change(pin, { target: { value: '12345678' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar al panel' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('PIN incorrecto o acceso no autorizado.'))
   })
 })
