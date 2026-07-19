@@ -1,0 +1,88 @@
+:root {
+  color: #243047;
+  background: #eef5f8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  --primary: #0077b6;
+  --primary-light: #00b4d8;
+  --primary-bg: #e2f1f8;
+  --dark: #03045e;
+  --gold: #d4af37;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+.app-shell { width: min(100% - 28px, 920px); margin: 0 auto; padding: 32px 0 48px; }
+.page-heading { margin-bottom: 22px; }
+.page-heading h1 { color: var(--dark); font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 4px 0 8px; }
+.page-heading p { color: #5b677a; margin: 0; }
+.eyebrow { color: var(--primary); font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.workspace { align-items: start; display: grid; gap: 22px; grid-template-columns: minmax(250px, .8fr) minmax(320px, 400px); justify-content: center; }
+
+.admin-panel { background: #fff; border: 1px solid #dbe7ef; border-radius: 18px; box-shadow: 0 8px 26px rgba(18, 67, 90, .08); padding: 20px; }
+.admin-panel h2 { color: var(--dark); font-size: 1.1rem; margin: 0 0 16px; }
+.admin-panel label { color: var(--primary); display: block; font-size: .72rem; font-weight: 800; letter-spacing: .06em; margin: 13px 0 6px; text-transform: uppercase; }
+.admin-panel input { background: #f9fbfc; border: 2px solid #dcecf4; border-radius: 10px; color: var(--dark); font-weight: 650; outline: none; padding: 10px 12px; width: 100%; }
+.admin-panel input:focus { background: #fff; border-color: var(--primary-light); }
+.id-input { align-items: center; background: #f9fbfc; border: 2px solid #dcecf4; border-radius: 10px; display: flex; overflow: hidden; }
+.id-input:focus-within { border-color: var(--primary-light); }
+.id-input span { color: var(--dark); font-weight: 800; padding-left: 12px; }
+.id-input input { border: 0; border-radius: 0; }
+.progress-summary { align-items: center; border-top: 1px solid #e8eef2; display: flex; justify-content: space-between; margin-top: 18px; padding-top: 14px; }
+.progress-summary strong { color: var(--primary); font-size: 1.25rem; }
+.status { border-radius: 10px; font-size: .84rem; line-height: 1.4; margin: 12px 0 0; padding: 10px 12px; }
+.status.error { background: #fff1f0; color: #b42318; }
+.status.success { background: #ecfdf3; color: #067647; }
+.status.info { background: #eff8ff; color: #175cd3; }
+
+.card-container { background: #fff; border: 2px solid var(--primary-light); border-radius: 20px; box-shadow: 0 10px 28px rgba(0,0,0,.12); overflow: hidden; width: 100%; }
+.card-header { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #fff; padding: 20px 15px; text-align: center; }
+.brand-logo { font-size: 1.5rem; font-weight: 850; }
+.card-body { padding: 18px 15px 4px; }
+.client-summary { display: grid; gap: 8px; margin-bottom: 16px; }
+.client-data { align-items: baseline; border-bottom: 1px solid #edf2f5; display: flex; gap: 8px; min-width: 0; padding-bottom: 7px; }
+.client-data-label { color: var(--primary); flex: none; font-size: .68rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.client-data-value { color: var(--dark); font-size: .92rem; overflow-wrap: anywhere; }
+.grid-container { display: grid; gap: 9px; grid-template-columns: repeat(5, 1fr); margin-bottom: 16px; }
+.stamp-box { align-items: center; aspect-ratio: 1; background: var(--primary-bg); border: 2px dashed var(--primary-light); border-radius: 12px; cursor: pointer; display: flex; justify-content: center; padding: 0; position: relative; transition: .16s ease; }
+.stamp-number { color: var(--primary); font-weight: 800; position: absolute; }
+.stamp-icon { height: 60%; opacity: 0; pointer-events: none; transform: scale(.65); transition: .16s ease; width: 60%; }
+.stamp-box.checked { background: #e0f2fe; border-style: solid; border-color: var(--primary); }
+.stamp-box.checked .stamp-number { opacity: .15; }
+.stamp-box.checked .stamp-icon { opacity: 1; transform: scale(1); }
+.stamp-box.gold-reward { background: #fffdf0; border: 2.5px solid var(--gold); }
+.stamp-box.gold-reward .stamp-number { color: var(--gold); }
+.stamp-box.gold-reward.checked { box-shadow: 0 0 11px rgba(212,175,55,.42); }
+.card-footer { background: #fafbfc; border-top: 1px solid #f0f0f0; padding: 13px 15px; text-align: center; }
+.reward-message { color: var(--dark); font-size: .75rem; font-weight: 600; line-height: 1.45; }
+
+.control-panel { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); margin: 22px auto 0; max-width: 720px; }
+.btn { border: 0; border-radius: 11px; cursor: pointer; font-weight: 800; padding: 13px; transition: .16s ease; }
+.btn:disabled { cursor: wait; opacity: .6; }
+.btn-whatsapp { background: #25d366; color: #fff; }
+.btn-download { background: var(--primary); color: #fff; }
+.btn-reset { background: #e2e8f0; border: 1px solid #cbd5e1; color: #475569; }
+
+.modal { align-items: center; background: rgba(0,0,0,.9); display: flex; flex-direction: column; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 1000; }
+.modal-instruction { color: #fff; font-weight: 750; line-height: 1.45; max-width: 560px; text-align: center; }
+.modal-content { align-items: center; background: #fff; border-radius: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 82vh; max-width: 95%; padding: 15px; }
+.modal-img { border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.28); max-height: 58vh; max-width: 100%; object-fit: contain; }
+.modal-content .btn { width: 100%; }
+.btn-close-modal { background: #ef4444; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-weight: 800; padding: 11px 22px; }
+
+@media (max-width: 720px) {
+  .app-shell { padding-top: 20px; }
+  .workspace { grid-template-columns: 1fr; }
+  .card-container { margin: 0 auto; max-width: 400px; }
+  .control-panel { grid-template-columns: 1fr; max-width: 400px; }
+}
+
+@media (max-width: 360px) {
+  .app-shell { width: min(100% - 18px, 920px); }
+  .grid-container { gap: 6px; }
+  .stamp-box { border-radius: 9px; }
+  .brand-logo { font-size: 1.25rem; }
+}
