@@ -47,7 +47,7 @@ export const LoyaltyCard = forwardRef<HTMLDivElement, LoyaltyCardProps>(
                 type="button"
                 aria-label={`Marcar ${number} compras`}
                 aria-pressed={checked}
-                onClick={() => onSelectCount(number)}
+                onClick={() => onSelectCount(number === purchaseCount ? number - 1 : number)}
               >
                 <span className="stamp-number">{number}</span>
                 <WaterDrop gold={reward} />
