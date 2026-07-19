@@ -2,46 +2,59 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  findClient: vi.fn(),
-  getClientHistory: vi.fn(),
-  redeemReward: vi.fn(),
-  updateClient: vi.fn(),
+  getSession: vi.fn(), signInWithPin: vi.fn(), signOut: vi.fn(),
+  createClient: vi.fn(), findClient: vi.fn(), getClientHistory: vi.fn(), redeemReward: vi.fn(), updateClient: vi.fn(),
+  getDashboardSummary: vi.fn(), getDailyPurchases: vi.fn(), getDashboardActivity: vi.fn(), getDashboardClients: vi.fn(),
 }))
-
 vi.mock('./lib/supabase', () => ({ isSupabaseConfigured: true }))
-vi.mock('./services/clients', () => mocks)
+vi.mock('./services/auth', () => mocks)
+vi.mock('./services/clients', () => ({ createClient: mocks.createClient, findClient: mocks.findClient, getClientHistory: mocks.getClientHistory, redeemReward: mocks.redeemReward, updateClient: mocks.updateClient }))
+vi.mock('./services/dashboard', () => ({ getDashboardSummary: mocks.getDashboardSummary, getDailyPurchases: mocks.getDailyPurchases, getDashboardActivity: mocks.getDashboardActivity, getDashboardClients: mocks.getDashboardClients }))
 vi.mock('./hooks/useCardExport', () => ({ useCardExport: () => ({ busy: false, imageUrl: null, isIOS: false, canSharePrepared: false, prepareDownload: vi.fn(), prepareShare: vi.fn(), sharePrepared: vi.fn(), closeModal: vi.fn() }) }))
-
 import App from './App'
 
-describe('flujo de clientes', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.getClientHistory.mockResolvedValue([]) })
-
-  it('crea un cliente con nombre, cédula y fidelidad', async () => {
-    mocks.createClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 3, created_at: '', updated_at: '' })
+describe('acceso administrativo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); mocks.getSession.mockResolvedValue(null); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getDashboardClients.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
+  })
+  it('solicita un PIN de ocho dígitos antes de mostrar el panel', async () => {
     render(<App />)
-    fireEvent.change(screen.getByLabelText('Cédula venezolana'), { target: { value: '12345678' } })
-    fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: 'María Pérez' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Marcar 3 compras' }))
-    fireEvent.click(screen.getByRole('button', { name: '➕ Guardar nuevo cliente' }))
-    await waitFor(() => expect(mocks.createClient).toHaveBeenCalledWith('12345678', 'María Pérez', 3))
-    expect(await screen.findByText('Cliente creado correctamente.')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('María Pérez')).toBeInTheDocument()
+    expect(await screen.findByText('Introduce el PIN administrativo para continuar.')).toBeInTheDocument()
+    const enter = screen.getByRole('button', { name: 'Entrar al panel' })
+    expect(enter).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('PIN de 8 dígitos'), { target: { value: '12345678' } })
+    expect(enter).toBeEnabled()
+  })
+  it('muestra el error de acceso sin revelar detalles', async () => {
+    mocks.signInWithPin.mockRejectedValue(new Error('PIN incorrecto o acceso no autorizado.'))
+    render(<App />)
+    const pin = await screen.findByLabelText('PIN de 8 dígitos')
+    fireEvent.change(pin, { target: { value: '12345678' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar al panel' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('PIN incorrecto o acceso no autorizado.'))
+  })
+})
+
+describe('edición de fidelidad', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); mocks.getSession.mockResolvedValue({ user: { id: 'admin' } }); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
+    mocks.getDashboardClients.mockResolvedValue([{ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 9, updated_at: '' }])
+    mocks.findClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 9, created_at: '', updated_at: '' })
+    mocks.updateClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 10, created_at: '', updated_at: '' })
   })
 
-  it('busca, carga y actualiza un cliente sin editar su cédula', async () => {
-    mocks.findClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 6, created_at: '', updated_at: '' })
-    mocks.updateClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María P.', purchase_count: 7, created_at: '', updated_at: '' })
+  it('usa solo las gotas y habilita el canje después de guardar 10 marcas', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Buscar cliente' }))
-    fireEvent.change(screen.getByLabelText('Cédula venezolana'), { target: { value: '12345678' } })
-    fireEvent.click(screen.getByRole('button', { name: '🔎 Buscar cliente' }))
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Nueva compra' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Clientes' }))
+    fireEvent.click(await screen.findByRole('button', { name: /María Pérez/ }))
     expect(await screen.findByDisplayValue('María Pérez')).toBeInTheDocument()
-    expect(screen.getByLabelText('Cédula', { exact: true })).toHaveAttribute('readonly')
-    fireEvent.change(screen.getByDisplayValue('María Pérez'), { target: { value: 'María P.' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Marcar 7 compras' }))
+    expect(screen.queryByRole('button', { name: '1' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar 10 compras' }))
+    expect(screen.queryByRole('button', { name: '🎁 Canjear beneficio' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
-    await waitFor(() => expect(mocks.updateClient).toHaveBeenCalledWith('12345678', 'María P.', 7))
+    expect(await screen.findByRole('button', { name: '🎁 Canjear beneficio' })).toBeInTheDocument()
+    expect(mocks.updateClient).toHaveBeenCalledWith('12345678', 'María Pérez', 10)
   })
 })

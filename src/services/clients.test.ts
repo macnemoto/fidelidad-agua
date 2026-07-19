@@ -15,21 +15,21 @@ describe('servicio de clientes', () => {
   it('devuelve null cuando no existe la cédula', async () => {
     mockRpcResponse({ data: [], error: null })
     await expect(findClient('V-12.345.678')).resolves.toBeNull()
-    expect(rpc).toHaveBeenCalledWith('find_client', { p_cedula: '12345678' })
+    expect(rpc).toHaveBeenCalledWith('admin_find_client', { p_cedula: '12345678' })
   })
 
   it('crea y actualiza mediante funciones separadas', async () => {
     const client = { id: '1', cedula: '12345678', name: 'María', purchase_count: 4, created_at: '', updated_at: '' }
     mockRpcResponse({ data: [client], error: null })
     await expect(createClient('12345678', ' María ', 4)).resolves.toEqual(client)
-    expect(rpc).toHaveBeenLastCalledWith('create_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
+    expect(rpc).toHaveBeenLastCalledWith('admin_create_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
     await expect(updateClient('12345678', ' María ', 4)).resolves.toEqual(client)
-    expect(rpc).toHaveBeenLastCalledWith('update_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
+    expect(rpc).toHaveBeenLastCalledWith('admin_update_client', { p_cedula: '12345678', p_name: 'María', p_purchase_count: 4 })
   })
 
   it('limita el historial desde el servicio', async () => {
     mockRpcResponse({ data: [], error: null })
     await expect(getClientHistory('12345678')).resolves.toEqual([])
-    expect(rpc).toHaveBeenCalledWith('get_client_history', { p_cedula: '12345678', p_limit: 10 })
+    expect(rpc).toHaveBeenCalledWith('admin_get_client_history', { p_cedula: '12345678', p_limit: 10 })
   })
 })
