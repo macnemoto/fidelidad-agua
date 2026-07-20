@@ -1,23 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getDashboardActivity, getDashboardSummary, getDailyFinancials, getFinancialSummary } from '../services/dashboard'
-import type { DashboardActivity, DashboardSummary, DailyFinancial, FinancialSummary } from '../types/dashboard'
+import { caracasDate, getDashboardActivity, getDashboardSummary, getDailyFinancials, getFinancialSummary } from '../services/dashboard'
+import type { DashboardActivity, DashboardFilter, DashboardSummary, DailyFinancial, FinancialSummary } from '../types/dashboard'
 
-type Period = 7 | 30 | 90 | 'all'
+type FilterChoice = '7' | '30' | '90' | 'all' | 'day' | 'range'
 const actionLabel: Record<string, string> = { created: 'Cliente creado', purchase_registered: 'Camión registrado', progress_updated: 'Progreso corregido', profile_updated: 'Nombre actualizado', reward_redeemed: 'Beneficio canjeado' }
 const money = (value: number | null | undefined, currency: string) => value == null ? '—' : `${new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${currency}`
 
 export function Dashboard({ onSelectClient }: { onSelectClient: (cedula: string) => void }) {
-  const [period, setPeriod] = useState<Period>(30)
+  const today = useMemo(() => caracasDate(), [])
+  const [choice, setChoice] = useState<FilterChoice>('30')
+  const [selectedDay, setSelectedDay] = useState(today)
+  const [range, setRange] = useState({ from: today, to: today })
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [financial, setFinancial] = useState<FinancialSummary | null>(null)
   const [daily, setDaily] = useState<DailyFinancial[]>([])
   const [activity, setActivity] = useState<DashboardActivity[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  useEffect(() => { let active = true; setLoading(true); setError(null); Promise.all([getDashboardSummary(period), getFinancialSummary(period), getDailyFinancials(period), getDashboardActivity()]).then(([nextSummary, nextFinancial, nextDaily, nextActivity]) => { if (active) { setSummary(nextSummary); setFinancial(nextFinancial); setDaily(nextDaily); setActivity(nextActivity) } }).catch((cause: unknown) => active && setError(cause instanceof Error ? cause.message : 'No se pudo cargar el resumen.')).finally(() => active && setLoading(false)); return () => { active = false } }, [period])
+  const filter: DashboardFilter = useMemo(() => {
+    if (choice === 'all') return { mode: 'all' }
+    if (choice === 'day') return { mode: 'day', date: selectedDay }
+    if (choice === 'range') return { mode: 'range', from: range.from, to: range.to }
+    return { mode: 'preset', days: Number(choice) as 7 | 30 | 90 }
+  }, [choice, range.from, range.to, selectedDay])
+  const invalidRange = choice === 'range' && range.from > range.to
+  useEffect(() => { if (invalidRange) return; let active = true; setLoading(true); setError(null); Promise.all([getDashboardSummary(filter), getFinancialSummary(filter), getDailyFinancials(filter), getDashboardActivity()]).then(([nextSummary, nextFinancial, nextDaily, nextActivity]) => { if (active) { setSummary(nextSummary); setFinancial(nextFinancial); setDaily(nextDaily); setActivity(nextActivity) } }).catch((cause: unknown) => active && setError(cause instanceof Error ? cause.message : 'No se pudo cargar el resumen.')).finally(() => active && setLoading(false)); return () => { active = false } }, [filter, invalidRange])
   const max = useMemo(() => Math.max(1, ...daily.map((item) => Math.abs(item.trucks_registered))), [daily])
   return <section className="dashboard-page" aria-busy={loading}>
-    <div className="section-heading"><div><span className="eyebrow">Resumen operativo</span><h2>Dashboard</h2></div><label className="period-select">Período<select value={period} onChange={(event) => setPeriod(event.target.value === 'all' ? 'all' : Number(event.target.value) as Period)}><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="all">Todo el historial</option></select></label></div>
+    <div className="section-heading dashboard-heading"><div><span className="eyebrow">Resumen operativo</span><h2>Dashboard</h2></div><div className="dashboard-filters"><label className="period-select">Período<select aria-label="Período" value={choice} onChange={(event) => setChoice(event.target.value as FilterChoice)}><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="day">Día específico</option><option value="range">Rango personalizado</option><option value="all">Todo el historial</option></select></label>{choice === 'day' && <label className="period-select">Día<input aria-label="Día específico" type="date" max={today} value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)} /></label>}{choice === 'range' && <div className="date-range"><label className="period-select">Desde<input aria-label="Desde" type="date" max={today} value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} /></label><label className="period-select">Hasta<input aria-label="Hasta" type="date" min={range.from} max={today} value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} /></label></div>}</div></div>
+    {invalidRange && <p className="status error">La fecha inicial no puede ser posterior a la fecha final.</p>}
     {error && <p className="status error">{error}</p>}
     <p className="financial-note">Cada gota representa un camión de 3 tanques. Valor de referencia: USD 25 por camión.</p>
     <div className="metric-grid">

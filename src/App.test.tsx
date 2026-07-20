@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./lib/supabase', () => ({ isSupabaseConfigured: true }))
 vi.mock('./services/auth', () => mocks)
 vi.mock('./services/clients', () => ({ createClient: mocks.createClient, findClient: mocks.findClient, getClientHistory: mocks.getClientHistory, redeemReward: mocks.redeemReward, updateClient: mocks.updateClient, saveClientV2: mocks.saveClientV2 }))
-vi.mock('./services/dashboard', () => ({ getDashboardSummary: mocks.getDashboardSummary, getDailyPurchases: mocks.getDailyPurchases, getFinancialSummary: mocks.getFinancialSummary, getDailyFinancials: mocks.getDailyFinancials, getDashboardActivity: mocks.getDashboardActivity, getDashboardClients: mocks.getDashboardClients }))
+vi.mock('./services/dashboard', () => ({ caracasDate: () => '2026-07-20', getDashboardSummary: mocks.getDashboardSummary, getDailyPurchases: mocks.getDailyPurchases, getFinancialSummary: mocks.getFinancialSummary, getDailyFinancials: mocks.getDailyFinancials, getDashboardActivity: mocks.getDashboardActivity, getDashboardClients: mocks.getDashboardClients }))
 vi.mock('./hooks/useCardExport', () => ({ useCardExport: () => ({ busy: false, imageUrl: null, isIOS: false, canSharePrepared: false, prepareDownload: vi.fn(), prepareShare: vi.fn(), sharePrepared: vi.fn(), closeModal: vi.fn() }) }))
 import App from './App'
 
@@ -56,5 +56,14 @@ describe('edición de fidelidad', () => {
     fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
     expect(await screen.findByRole('button', { name: '🎁 Canjear beneficio' })).toBeInTheDocument()
     expect(mocks.saveClientV2).toHaveBeenCalledWith('update', '12345678', 'María Pérez', 10, 9)
+  })
+
+  it('permite consultar las ganancias de un día con el calendario', async () => {
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Dashboard' })
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'day' } })
+    const calendar = await screen.findByLabelText('Día específico')
+    fireEvent.change(calendar, { target: { value: '2026-07-19' } })
+    await waitFor(() => expect(mocks.getFinancialSummary).toHaveBeenLastCalledWith({ mode: 'day', date: '2026-07-19' }))
   })
 })
