@@ -11,6 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@netlify/functions": "^5.3.0",
     "@supabase/supabase-js": "^2.52.0",
     "html2canvas": "^1.4.1",
     "react": "^19.1.0",

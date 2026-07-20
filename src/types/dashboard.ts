@@ -13,6 +13,27 @@ export interface DailyPurchase {
   tanks_registered: number
 }
 
+export interface FinancialSummary {
+  trucks_registered: number
+  tanks_registered: number
+  revenue_usd: number
+  revenue_ves: number
+  revenue_usdt: number
+  missing_rate_trucks: number
+}
+
+export interface DailyFinancial {
+  day: string
+  trucks_registered: number
+  tanks_registered: number
+  revenue_usd: number
+  revenue_ves: number
+  revenue_usdt: number
+  bcv_rate: number | null
+  binance_rate: number | null
+  rate_status: 'live' | 'fallback' | 'missing' | 'legacy'
+}
+
 export interface DashboardClient {
   id: string
   cedula: string

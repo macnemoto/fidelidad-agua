@@ -3,19 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(), signInWithPin: vi.fn(), signOut: vi.fn(),
-  createClient: vi.fn(), findClient: vi.fn(), getClientHistory: vi.fn(), redeemReward: vi.fn(), updateClient: vi.fn(),
-  getDashboardSummary: vi.fn(), getDailyPurchases: vi.fn(), getDashboardActivity: vi.fn(), getDashboardClients: vi.fn(),
+  createClient: vi.fn(), findClient: vi.fn(), getClientHistory: vi.fn(), redeemReward: vi.fn(), updateClient: vi.fn(), saveClientV2: vi.fn(),
+  getDashboardSummary: vi.fn(), getDailyPurchases: vi.fn(), getFinancialSummary: vi.fn(), getDailyFinancials: vi.fn(), getDashboardActivity: vi.fn(), getDashboardClients: vi.fn(),
 }))
 vi.mock('./lib/supabase', () => ({ isSupabaseConfigured: true }))
 vi.mock('./services/auth', () => mocks)
-vi.mock('./services/clients', () => ({ createClient: mocks.createClient, findClient: mocks.findClient, getClientHistory: mocks.getClientHistory, redeemReward: mocks.redeemReward, updateClient: mocks.updateClient }))
-vi.mock('./services/dashboard', () => ({ getDashboardSummary: mocks.getDashboardSummary, getDailyPurchases: mocks.getDailyPurchases, getDashboardActivity: mocks.getDashboardActivity, getDashboardClients: mocks.getDashboardClients }))
+vi.mock('./services/clients', () => ({ createClient: mocks.createClient, findClient: mocks.findClient, getClientHistory: mocks.getClientHistory, redeemReward: mocks.redeemReward, updateClient: mocks.updateClient, saveClientV2: mocks.saveClientV2 }))
+vi.mock('./services/dashboard', () => ({ getDashboardSummary: mocks.getDashboardSummary, getDailyPurchases: mocks.getDailyPurchases, getFinancialSummary: mocks.getFinancialSummary, getDailyFinancials: mocks.getDailyFinancials, getDashboardActivity: mocks.getDashboardActivity, getDashboardClients: mocks.getDashboardClients }))
 vi.mock('./hooks/useCardExport', () => ({ useCardExport: () => ({ busy: false, imageUrl: null, isIOS: false, canSharePrepared: false, prepareDownload: vi.fn(), prepareShare: vi.fn(), sharePrepared: vi.fn(), closeModal: vi.fn() }) }))
 import App from './App'
 
 describe('acceso administrativo', () => {
   beforeEach(() => {
-    vi.clearAllMocks(); mocks.getSession.mockResolvedValue(null); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getDashboardClients.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
+    vi.clearAllMocks(); mocks.getSession.mockResolvedValue(null); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getFinancialSummary.mockResolvedValue({}); mocks.getDailyFinancials.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getDashboardClients.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
   })
   it('solicita un PIN de ocho dígitos antes de mostrar el panel', async () => {
     render(<App />)
@@ -37,10 +37,10 @@ describe('acceso administrativo', () => {
 
 describe('edición de fidelidad', () => {
   beforeEach(() => {
-    vi.clearAllMocks(); mocks.getSession.mockResolvedValue({ user: { id: 'admin' } }); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
+    vi.clearAllMocks(); mocks.getSession.mockResolvedValue({ user: { id: 'admin' } }); mocks.getDashboardSummary.mockResolvedValue({}); mocks.getDailyPurchases.mockResolvedValue([]); mocks.getFinancialSummary.mockResolvedValue({}); mocks.getDailyFinancials.mockResolvedValue([]); mocks.getDashboardActivity.mockResolvedValue([]); mocks.getClientHistory.mockResolvedValue([])
     mocks.getDashboardClients.mockResolvedValue([{ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 9, updated_at: '' }])
     mocks.findClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 9, created_at: '', updated_at: '' })
-    mocks.updateClient.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 10, created_at: '', updated_at: '' })
+    mocks.saveClientV2.mockResolvedValue({ id: '1', cedula: '12345678', name: 'María Pérez', purchase_count: 10, created_at: '', updated_at: '' })
   })
 
   it('usa solo las gotas y habilita el canje después de guardar 10 marcas', async () => {
@@ -55,6 +55,6 @@ describe('edición de fidelidad', () => {
     expect(screen.queryByRole('button', { name: '🎁 Canjear beneficio' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
     expect(await screen.findByRole('button', { name: '🎁 Canjear beneficio' })).toBeInTheDocument()
-    expect(mocks.updateClient).toHaveBeenCalledWith('12345678', 'María Pérez', 10)
+    expect(mocks.saveClientV2).toHaveBeenCalledWith('update', '12345678', 'María Pérez', 10, 9)
   })
 })

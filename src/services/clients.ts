@@ -58,3 +58,18 @@ export async function redeemReward(cedula: string): Promise<Client> {
   if (!client) throw new Error('Supabase no devolvió el cliente actualizado.')
   return client
 }
+
+export async function saveClientV2(action: 'create' | 'update', cedula: string, name: string, purchaseCount: number, previousCount = 0): Promise<Client> {
+  const { data } = await requireSupabase().auth.getSession()
+  const token = data.session?.access_token
+  if (!token) throw new Error('La sesión administrativa expiró. Inicia sesión nuevamente.')
+  const response = await fetch('/.netlify/functions/save-client-v2', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action, cedula: normalizeCedula(cedula), name: name.trim(), purchaseCount, previousCount }),
+  })
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) throw new Error(typeof payload?.message === 'string' ? payload.message : 'No se pudo guardar el cliente.')
+  if (!payload?.client) throw new Error('El servidor no devolvió el cliente actualizado.')
+  return payload.client as Client
+}
