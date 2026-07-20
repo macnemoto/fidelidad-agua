@@ -38,8 +38,11 @@ async function rateForSave(token: string) {
     const response = await fetch('https://api.cotizave.com/v1/fx/rates', { headers: { 'X-API-Key': env('COTIZAVE_API_KEY'), accept: 'application/json' }, signal: AbortSignal.timeout(5000) })
     if (!response.ok) throw new Error('Cotizave no respondió correctamente.')
     const payload = await response.json() as RateResponse
-    const bcv = payload.rates?.find((rate) => rate.market === 'bcv')
-    const binance = payload.rates?.find((rate) => rate.market === 'binance_p2p')
+    // Cotizave identifica la tasa oficial BCV como "reference" y el mercado
+    // P2P de Binance como "binance". Conservamos los alias anteriores para
+    // que la integración siga siendo compatible si el proveedor los expone.
+    const bcv = payload.rates?.find((rate) => rate.market === 'reference' || rate.market === 'bcv')
+    const binance = payload.rates?.find((rate) => rate.market === 'binance' || rate.market === 'binance_p2p')
     if (!bcv?.mid || !binance?.mid || bcv.mid <= 0 || binance.mid <= 0) throw new Error('La respuesta no contiene BCV y Binance válidos.')
     const inserted = await supabaseRpc('admin_record_rate_snapshot', { p_bcv_rate: bcv.mid, p_binance_rate: binance.mid, p_bcv_updated_at: bcv.updated_at ?? null, p_binance_updated_at: binance.updated_at ?? null, p_status: 'live' }, token)
     const row = Array.isArray(inserted) ? inserted[0] : null
