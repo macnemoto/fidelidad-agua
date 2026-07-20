@@ -1,5 +1,11 @@
 export type ClientStatus = 'all' | 'empty' | 'active' | 'ready'
 
+export type DashboardFilter =
+  | { mode: 'preset'; days: 7 | 30 | 90 }
+  | { mode: 'all' }
+  | { mode: 'day'; date: string }
+  | { mode: 'range'; from: string; to: string }
+
 export interface DashboardSummary {
   total_clients: number
   active_clients: number
