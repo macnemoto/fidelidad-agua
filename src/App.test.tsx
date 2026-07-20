@@ -58,7 +58,7 @@ describe('edición de fidelidad', () => {
     fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
     expect(await screen.findByRole('button', { name: '🎁 Canjear beneficio' })).toBeInTheDocument()
     expect(mocks.saveClientV2).toHaveBeenCalledWith('update', '12345678', 'María Pérez', 10, 9)
-    expect(toastMocks.success).toHaveBeenCalledWith('Cambios guardados.', { id: 'client-operation' })
+    expect(toastMocks.success).toHaveBeenCalledWith('Cambios guardados.', { id: 'client-operation', duration: 4000 })
   })
 
   it('permite consultar las ganancias de un día con el calendario', async () => {

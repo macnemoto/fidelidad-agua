@@ -11,15 +11,15 @@ export const toastId = {
 } as const
 
 export function showSuccess(message: string, id?: string) {
-  toast.success(message, { id })
+  toast.success(message, { id, duration: 4000 })
 }
 
 export function showError(message: string, id?: string) {
-  toast.error(message, { id, duration: 6000 })
+  toast.error(message, { id, duration: 7000 })
 }
 
 export function showInfo(message: string, id?: string) {
-  toast.info(message, { id })
+  toast.info(message, { id, duration: 5000 })
 }
 
 export function showLoading(message: string, id: string) {
