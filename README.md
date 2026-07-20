@@ -26,6 +26,7 @@ Incluye un panel administrativo con historial, beneficios, métricas de ventas, 
 - Netlify Functions
 - Cotizave API
 - Vitest y Testing Library
+- Sonner para notificaciones visibles y accesibles.
 
 ## Requisitos
 
@@ -121,4 +122,3 @@ Los textos, colores, valor del beneficio, cantidad de compras y proveedor de tas
 ## Licencia
 
 Este proyecto se distribuye bajo la [licencia MIT](LICENSE). Puedes usarlo, modificarlo y distribuirlo respetando los términos de la licencia.
-

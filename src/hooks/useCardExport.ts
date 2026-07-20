@@ -10,7 +10,7 @@ function safeFileName(name: string) {
   return name.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').slice(0, 60) || 'cliente'
 }
 
-export function useCardExport(cardRef: RefObject<HTMLDivElement | null>, name: string, validate: () => boolean) {
+export function useCardExport(cardRef: RefObject<HTMLDivElement | null>, name: string, validate: () => boolean, onError: (message: string) => void = () => undefined) {
   const [busy, setBusy] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const preparedFile = useRef<File | null>(null)
@@ -57,9 +57,9 @@ export function useCardExport(cardRef: RefObject<HTMLDivElement | null>, name: s
       await navigator.share({ files: [file] })
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
-      throw error
+      onError(error instanceof Error ? error.message : 'No se pudo compartir la imagen.')
     }
-  }, [canShareFile])
+  }, [canShareFile, onError])
 
   const prepareDownload = useCallback(async () => {
     if (busy) return
@@ -76,10 +76,12 @@ export function useCardExport(cardRef: RefObject<HTMLDivElement | null>, name: s
         link.click()
         setTimeout(() => URL.revokeObjectURL(url), 0)
       }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'No se pudo preparar la descarga.')
     } finally {
       setBusy(false)
     }
-  }, [busy, generate, isIOS, showPrepared])
+  }, [busy, generate, isIOS, onError, showPrepared])
 
   const prepareShare = useCallback(async () => {
     if (busy) return
@@ -90,11 +92,11 @@ export function useCardExport(cardRef: RefObject<HTMLDivElement | null>, name: s
       if (isIOS || !canShareFile(file)) showPrepared(file)
       else await navigator.share({ files: [file] })
     } catch (error) {
-      if (!(error instanceof DOMException && error.name === 'AbortError')) throw error
+      if (!(error instanceof DOMException && error.name === 'AbortError')) onError(error instanceof Error ? error.message : 'No se pudo compartir la imagen.')
     } finally {
       setBusy(false)
     }
-  }, [busy, canShareFile, generate, isIOS, showPrepared])
+  }, [busy, canShareFile, generate, isIOS, onError, showPrepared])
 
   return {
     busy,

@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   createClient: vi.fn(), findClient: vi.fn(), getClientHistory: vi.fn(), redeemReward: vi.fn(), updateClient: vi.fn(), saveClientV2: vi.fn(),
   getDashboardSummary: vi.fn(), getDailyPurchases: vi.fn(), getFinancialSummary: vi.fn(), getDailyFinancials: vi.fn(), getDashboardActivity: vi.fn(), getDashboardClients: vi.fn(),
 }))
+const toastMocks = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn(), loading: vi.fn(), warning: vi.fn(), dismiss: vi.fn() }))
+vi.mock('sonner', () => ({ toast: toastMocks }))
 vi.mock('./lib/supabase', () => ({ isSupabaseConfigured: true }))
 vi.mock('./services/auth', () => mocks)
 vi.mock('./services/clients', () => ({ createClient: mocks.createClient, findClient: mocks.findClient, getClientHistory: mocks.getClientHistory, redeemReward: mocks.redeemReward, updateClient: mocks.updateClient, saveClientV2: mocks.saveClientV2 }))
@@ -31,7 +33,7 @@ describe('acceso administrativo', () => {
     const pin = await screen.findByLabelText('PIN de 8 dígitos')
     fireEvent.change(pin, { target: { value: '12345678' } })
     fireEvent.click(screen.getByRole('button', { name: 'Entrar al panel' }))
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('PIN incorrecto o acceso no autorizado.'))
+    await waitFor(() => expect(toastMocks.error).toHaveBeenCalledWith('PIN incorrecto o acceso no autorizado.', expect.objectContaining({ id: 'session-operation' })))
   })
 })
 
@@ -56,6 +58,7 @@ describe('edición de fidelidad', () => {
     fireEvent.click(screen.getByRole('button', { name: '💾 Guardar cambios' }))
     expect(await screen.findByRole('button', { name: '🎁 Canjear beneficio' })).toBeInTheDocument()
     expect(mocks.saveClientV2).toHaveBeenCalledWith('update', '12345678', 'María Pérez', 10, 9)
+    expect(toastMocks.success).toHaveBeenCalledWith('Cambios guardados.', { id: 'client-operation' })
   })
 
   it('permite consultar las ganancias de un día con el calendario', async () => {
